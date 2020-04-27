@@ -49,7 +49,7 @@ class SelectBelongsToMany extends Field implements RelatableField
      */
     public $display;
 
-    public Closure $afterFillCallback;
+    public ?Closure $afterFillCallback;
 
     /**
      * Create a new field.
@@ -68,6 +68,7 @@ class SelectBelongsToMany extends Field implements RelatableField
         $this->resourceClass = $resource;
         $this->resourceName = $resource::uriKey();
         $this->manyToManyRelationship = $this->attribute;
+        $this->afterFillCallback = null;
     }
 
     public function afterFill(Closure $afterFillCallback)
