@@ -2,6 +2,7 @@
 
 namespace BbsLab\NovaSelectField;
 
+use Closure;
 use Illuminate\Support\Str;
 use Laravel\Nova\Contracts\RelatableField;
 use Laravel\Nova\Fields\Field;
@@ -48,6 +49,8 @@ class SelectBelongsToMany extends Field implements RelatableField
      */
     public $display;
 
+    public Closure $afterFillCallback;
+
     /**
      * Create a new field.
      *
@@ -65,6 +68,13 @@ class SelectBelongsToMany extends Field implements RelatableField
         $this->resourceClass = $resource;
         $this->resourceName = $resource::uriKey();
         $this->manyToManyRelationship = $this->attribute;
+    }
+
+    public function afterFill(Closure $afterFillCallback)
+    {
+        $this->afterFillCallback = $afterFillCallback;
+
+        return $this;
     }
 
     public function resolve($resource, $attribute = null)
@@ -94,14 +104,13 @@ class SelectBelongsToMany extends Field implements RelatableField
         }
 
         $value = $request[$requestAttribute];
-
-        if (empty($value)) {
-            return;
-        }
-
-        $value = explode(',', $value);
+        $value = empty($value) ? [] : explode(',', $value);
 
         $model->{$this->manyToManyRelationship}()->sync($value);
+
+        if (is_callable($this->afterFillCallback)) {
+            call_user_func($this->afterFillCallback, $model, $value);
+        }
     }
 
     /**
