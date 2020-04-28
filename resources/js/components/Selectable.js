@@ -8,7 +8,6 @@ export default {
     availableResources: [],
     initializingWithExistingResources: false,
     selectedResources: null,
-    selectedResourcesIds: null,
     softDeletes: false,
     withTrashed: false,
   }),
@@ -86,13 +85,21 @@ export default {
       )
     },
 
+    selectedResourcesKeys() {
+      if (! this.selectedResources || ! this.selectedResources.length) {
+        return []
+      }
+
+      return this.selectedResources.map(resource => resource.value)
+    },
+
     /**
      * Get the query params for getting available resources
      */
     queryParams() {
       return {
         params: {
-          current: this.selectedResourcesIds,
+          current: this.selectedResourcesKeys,
           first: this.initializingWithExistingResources,
           search: this.search,
           withTrashed: this.withTrashed,

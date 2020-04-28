@@ -65,13 +65,7 @@ export default {
     initializeComponent() {
       this.withTrashed = false
       this.isMultiple = true
-      this.selectedResources = []
-      this.selectedResourcesIds = []
-      console.log(this.field)
-      if (this.editingExistingResource) {
-        this.initializingWithExistingResources = true
-        this.selectedResources = this.field.selectedResources
-      }
+      this.selectedResources = this.field.selectedResources
 
       this.determineIfSoftDeletes()
     },
@@ -87,7 +81,8 @@ export default {
      * Fill the given FormData object with the field's internal value.
      */
     fill(formData) {
-      formData.append(this.field.attribute, this.selectedResources.map(r => r.value))
+
+      formData.append(this.field.attribute, this.selectedResources && this.selectedResources.map(r => r.value))
     },
 
     /**

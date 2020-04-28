@@ -4,15 +4,15 @@ namespace BbsLab\NovaSelectField;
 
 use Closure;
 use Illuminate\Support\Str;
-use Laravel\Nova\Contracts\RelatableField;
+use Laravel\Nova\Fields\BelongsToMany;
 use Laravel\Nova\Fields\Field;
-use Laravel\Nova\Fields\FormatsRelatableDisplayValues;
 use Laravel\Nova\Fields\ResourceRelationshipGuesser;
+use Laravel\Nova\Http\Controllers\ResourceAttachController;
 use Laravel\Nova\Http\Requests\NovaRequest;
 
-class SelectBelongsToMany extends Field implements RelatableField
+class SelectBelongsToMany extends BelongsToMany
 {
-    use Traits\BehaveHasBelongsTo, FormatsRelatableDisplayValues;
+    use Traits\BehaveHasBelongsTo;
 
     /**
      * The field's component.
@@ -22,34 +22,9 @@ class SelectBelongsToMany extends Field implements RelatableField
     public $component = 'nova-select-belongs-to-many-field';
 
     /**
-     * The class name of the related resource.
-     *
-     * @var string
+     * @var \Closure|null
      */
-    public $resourceClass;
-
-    /**
-     * The URI key of the related resource.
-     *
-     * @var string
-     */
-    public $resourceName;
-
-    /**
-     * The name of the Eloquent "belongs to many" relationship.
-     *
-     * @var string
-     */
-    public $manyToManyRelationship;
-
-    /**
-     * The column that should be displayed for the field.
-     *
-     * @var \Closure
-     */
-    public $display;
-
-    public ?Closure $afterFillCallback;
+    public $afterFillCallback;
 
     /**
      * Create a new field.
@@ -61,7 +36,7 @@ class SelectBelongsToMany extends Field implements RelatableField
      */
     public function __construct($name, $attribute = null, $resource = null)
     {
-        parent::__construct($name, $attribute);
+        parent::__construct($name, $attribute, $resource);
 
         $resource = $resource ?? ResourceRelationshipGuesser::guessResource($name);
 
@@ -71,13 +46,24 @@ class SelectBelongsToMany extends Field implements RelatableField
         $this->afterFillCallback = null;
     }
 
-    public function afterFill(Closure $afterFillCallback)
+    /**
+     * @param  \Closure  $afterFillCallback
+     * @return $this
+     */
+    public function afterFillUsing(Closure $afterFillCallback)
     {
         $this->afterFillCallback = $afterFillCallback;
 
         return $this;
     }
 
+    /**
+     * Resolve the field's value.
+     *
+     * @param  mixed  $resource
+     * @param  string|null  $attribute
+     * @return void
+     */
     public function resolve($resource, $attribute = null)
     {
         $attribute = $attribute ?? $this->manyToManyRelationship;
@@ -98,6 +84,15 @@ class SelectBelongsToMany extends Field implements RelatableField
             })->sortBy('display', SORT_NATURAL | SORT_FLAG_CASE)->values();
     }
 
+    /**
+     * Hydrate the given attribute on the model based on the incoming request.
+     *
+     * @param  \Laravel\Nova\Http\Requests\NovaRequest  $request
+     * @param  string  $requestAttribute
+     * @param  object  $model
+     * @param  string  $attribute
+     * @return mixed
+     */
     protected function fillAttributeFromRequest(NovaRequest $request, $requestAttribute, $model, $attribute)
     {
         if (! $request->exists($requestAttribute)) {
@@ -105,13 +100,27 @@ class SelectBelongsToMany extends Field implements RelatableField
         }
 
         $value = $request[$requestAttribute];
-        $value = empty($value) ? [] : explode(',', $value);
+        $value = (empty($value) || $value === 'null')
+            ? []
+            : explode(',', $value);
 
         $model->{$this->manyToManyRelationship}()->sync($value);
 
         if (is_callable($this->afterFillCallback)) {
             call_user_func($this->afterFillCallback, $model, $value);
         }
+    }
+
+    public function getRules(NovaRequest $request)
+    {
+        return $this->routeIsAttachable($request)
+            ? parent::getRules($request)
+            : Field::getRules($request);
+    }
+
+    protected function routeIsAttachable(NovaRequest $request): bool
+    {
+        return $request->route()->getController() instanceof ResourceAttachController;
     }
 
     /**
