@@ -1,8 +1,8 @@
 <?php
 
-namespace BbsLab\NovaSelectField\Traits;
+namespace BBSLab\NovaSelectField\Traits;
 
-use BbsLab\NovaSelectField\SelectBelongsToMany;
+use BBSLab\NovaSelectField\SelectBelongsToMany;
 use Laravel\Nova\Contracts\ListableField;
 use Laravel\Nova\Fields\FieldCollection;
 use Laravel\Nova\Fields\ID;

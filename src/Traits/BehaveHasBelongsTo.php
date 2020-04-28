@@ -1,6 +1,6 @@
 <?php
 
-namespace BbsLab\NovaSelectField\Traits;
+namespace BBSLab\NovaSelectField\Traits;
 
 use Illuminate\Support\Str;
 use Laravel\Nova\Http\Requests\NovaRequest;

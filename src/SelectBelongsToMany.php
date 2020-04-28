@@ -1,6 +1,6 @@
 <?php
 
-namespace BbsLab\NovaSelectField;
+namespace BBSLab\NovaSelectField;
 
 use Closure;
 use Illuminate\Support\Str;
